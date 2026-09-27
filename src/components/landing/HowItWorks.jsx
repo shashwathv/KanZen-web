@@ -13,12 +13,7 @@ export default function HowItWorks() {
       borderTop: "1px solid var(--border)",
       animation: "fadeUp 0.7s 0.3s cubic-bezier(0.16,1,0.3,1) both",
     }}>
-      <p style={{
-        fontSize: "0.68rem", color: "var(--text3)",
-        textTransform: "uppercase", letterSpacing: "0.12em",
-        fontWeight: 600, marginBottom: "2rem",
-        fontFamily: "var(--font-mono)",
-      }}>
+      <p className="eyebrow" style={{ marginBottom: "2rem" }}>
         How it works
       </p>
 

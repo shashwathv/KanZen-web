@@ -5,27 +5,17 @@ function CardField({ label, value, onChange, mono, area }) {
   const Tag = area ? "textarea" : "input";
   return (
     <label style={{ display: "block", marginBottom: "0.6rem" }}>
-      <span style={{
-        display: "block", fontSize: "0.68rem", fontWeight: 600,
-        color: "var(--text3)", textTransform: "uppercase",
-        letterSpacing: "0.06em", marginBottom: "0.3rem",
-      }}>
-        {label}
-      </span>
+      <span className="field-label">{label}</span>
       <Tag
+        className="input"
         value={value}
         onChange={e => onChange(e.target.value)}
         rows={area ? 2 : undefined}
         style={{
-          width: "100%", padding: "0.5rem 0.65rem",
-          background: "var(--surface2)", border: "1px solid var(--border)",
-          borderRadius: 8, color: "var(--text1)",
-          fontSize: "0.85rem", fontFamily: mono ? "var(--font-mono)" : "var(--font-body)",
-          outline: "none", transition: "border-color 0.15s",
+          padding: "0.5rem 0.65rem", fontSize: "0.85rem",
+          fontFamily: mono ? "var(--font-mono)" : undefined,
           resize: area ? "vertical" : "none",
         }}
-        onFocus={e => { e.target.style.borderColor = "var(--jade-border)"; e.target.style.boxShadow = "0 0 0 3px var(--jade-dim)"; }}
-        onBlur={e => { e.target.style.borderColor = "var(--border)"; e.target.style.boxShadow = "none"; }}
       />
     </label>
   );
@@ -42,29 +32,16 @@ function kanjiFontSize(text) {
 
 function CardEditor({ card, onChange, onRemove }) {
   const set = (field) => (value) => onChange({ ...card, [field]: value });
-  const fontSize = kanjiFontSize(card.kanji);
 
   return (
-    <div className="card-editor-row" style={{
-      background: "var(--surface)", border: "1px solid var(--border)",
-      borderRadius: 10, padding: "1.1rem", marginBottom: "0.75rem",
-      display: "flex", gap: "1rem", position: "relative",
-    }}>
-      <div className="card-editor-kanji" style={{
-        "--kanji-font-size": fontSize,
-        fontSize, fontWeight: 800, lineHeight: 1.15,
-        color: "var(--text1)", flexShrink: 0, minWidth: 64,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "var(--surface2)", borderRadius: 8,
-        border: "1px solid var(--border)",
-        padding: "0.5rem 0.6rem", whiteSpace: "nowrap",
-      }}>
+    <div className="card card-editor-row">
+      <div className="card-editor-kanji" style={{ "--kanji-font-size": kanjiFontSize(card.kanji) }}>
         {card.kanji}
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <CardField label="Meaning" value={card.meaning} onChange={set("meaning")} />
-        <div className="review-fields" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
+        <div className="review-fields">
           <CardField label="On-yomi" value={card.on_yomi} onChange={set("on_yomi")} mono />
           <CardField label="Kun-yomi" value={card.kun_yomi} onChange={set("kun_yomi")} mono />
         </div>
@@ -72,17 +49,10 @@ function CardEditor({ card, onChange, onRemove }) {
       </div>
 
       <button
-        className="card-editor-remove"
+        className="btn-secondary btn-danger card-editor-remove"
         onClick={onRemove}
         title="Remove this card"
-        style={{
-          flexShrink: 0, width: 28, height: 28, alignSelf: "flex-start",
-          background: "var(--surface2)", border: "1px solid var(--border)",
-          borderRadius: 7, color: "var(--text3)", cursor: "pointer",
-          fontSize: "0.8rem", transition: "all 0.15s",
-        }}
-        onMouseOver={e => { e.currentTarget.style.borderColor = "var(--flame-border)"; e.currentTarget.style.color = "var(--flame)"; }}
-        onMouseOut={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text3)"; }}
+        aria-label={`Remove card ${card.kanji}`}
       >
         ✕
       </button>
@@ -108,6 +78,8 @@ export default function ReviewView({ cards, onBuild, onReset, isBuilding, buildE
     onBuild(payload, deckName.trim() || undefined);
   };
 
+  const empty = items.length === 0;
+
   return (
     <div style={{ animation: "fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards" }}>
       <div style={{ marginBottom: "1.25rem" }}>
@@ -121,31 +93,18 @@ export default function ReviewView({ cards, onBuild, onReset, isBuilding, buildE
 
       {user && (
         <label style={{ display: "block", marginBottom: "1.1rem" }}>
-          <span style={{
-            display: "block", fontSize: "0.68rem", fontWeight: 600,
-            color: "var(--text3)", textTransform: "uppercase",
-            letterSpacing: "0.06em", marginBottom: "0.3rem",
-          }}>
-            Deck name (saved to your dashboard)
-          </span>
+          <span className="field-label">Deck name (saved to your dashboard)</span>
           <input
+            className="input"
             value={deckName}
             onChange={e => setDeckName(e.target.value)}
             placeholder={`Deck — ${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
-            style={{
-              width: "100%", padding: "0.6rem 0.75rem",
-              background: "var(--surface)", border: "1px solid var(--border)",
-              borderRadius: 8, color: "var(--text1)",
-              fontSize: "0.9rem", fontFamily: "var(--font-body)",
-              outline: "none", transition: "border-color 0.15s, box-shadow 0.15s",
-            }}
-            onFocus={e => { e.target.style.borderColor = "var(--jade-border)"; e.target.style.boxShadow = "0 0 0 3px var(--jade-dim)"; }}
-            onBlur={e => { e.target.style.borderColor = "var(--border)"; e.target.style.boxShadow = "none"; }}
+            style={{ padding: "0.6rem 0.75rem", fontSize: "0.9rem", background: "var(--surface)" }}
           />
         </label>
       )}
 
-      {items.length === 0 ? (
+      {empty ? (
         <div style={{
           textAlign: "center", padding: "2rem",
           border: "1px dashed var(--border-hover)", borderRadius: 10,
@@ -165,7 +124,7 @@ export default function ReviewView({ cards, onBuild, onReset, isBuilding, buildE
       )}
 
       {buildError && (
-        <p style={{
+        <p role="alert" style={{
           color: "var(--flame)", fontSize: "0.82rem",
           marginBottom: "0.75rem", textAlign: "center",
         }}>
@@ -174,32 +133,24 @@ export default function ReviewView({ cards, onBuild, onReset, isBuilding, buildE
       )}
 
       <button
+        className="btn-primary"
         onClick={handleSubmit}
-        disabled={items.length === 0 || isBuilding}
+        disabled={empty || isBuilding}
         style={{
           display: "block", width: "100%",
-          background: items.length === 0 ? "var(--surface3)" : "var(--jade)",
-          color: items.length === 0 ? "var(--text3)" : "#0B0A08",
-          border: "none", padding: "0.9rem 1.5rem", borderRadius: 8,
+          padding: "0.9rem 1.5rem", marginBottom: "0.6rem",
           fontWeight: 800, fontSize: "0.95rem", letterSpacing: "-0.02em",
-          cursor: items.length === 0 || isBuilding ? "not-allowed" : "pointer",
-          marginBottom: "0.6rem", fontFamily: "var(--font-body)",
-          transition: "opacity 0.15s", opacity: isBuilding ? 0.7 : 1,
+          ...(empty && { background: "var(--surface3)", color: "var(--text3)", boxShadow: "none" }),
         }}
       >
         {isBuilding ? "Generating deck…" : `Generate deck (${items.length} card${items.length === 1 ? "" : "s"})`}
       </button>
 
       <button
+        className="btn-ghost"
         onClick={onReset}
         disabled={isBuilding}
-        style={{
-          display: "block", width: "100%",
-          background: "transparent", color: "var(--text3)",
-          border: "1px solid var(--border)", padding: "0.75rem",
-          borderRadius: 8, cursor: isBuilding ? "not-allowed" : "pointer",
-          fontSize: "0.85rem", fontFamily: "var(--font-body)",
-        }}
+        style={{ display: "block", width: "100%", padding: "0.75rem", fontSize: "0.85rem" }}
       >
         Start over
       </button>

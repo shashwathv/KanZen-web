@@ -32,24 +32,11 @@ function FloatingCard({ card, style }) {
 
 export default function HeroSection() {
   return (
-    <div
-      className="hero-grid"
-      style={{
-        display: "grid", gridTemplateColumns: "1.15fr 0.85fr",
-        gap: "2.5rem", alignItems: "center",
-        marginBottom: "4.5rem",
-      }}
-    >
+    <div className="hero-grid">
       <div style={{ animation: "fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) forwards" }}>
-        <div className="hero-eyebrow" style={{
-          display: "inline-flex", alignItems: "center", gap: "0.4rem",
-          background: "var(--jade-dim)", border: "1px solid var(--jade-border)",
-          borderRadius: 99, padding: "0.3rem 0.85rem", marginBottom: "1.5rem",
-        }}>
+        <div className="hero-eyebrow">
           <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--jade)", display: "inline-block" }} />
-          <span style={{ fontSize: "0.7rem", color: "var(--jade)", fontWeight: 600, letterSpacing: "0.04em", fontFamily: "var(--font-mono)" }}>
-            KANJI → ANKI IN SECONDS
-          </span>
+          <span>KANJI → ANKI IN SECONDS</span>
         </div>
 
         <h1 style={{
@@ -70,13 +57,7 @@ export default function HeroSection() {
         </p>
       </div>
 
-      <div
-        className="hero-cards"
-        style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: "0.75rem",
-        }}
-      >
+      <div className="hero-cards" aria-hidden="true">
         {KANJI_CARDS.map((card, i) => (
           <FloatingCard
             key={card.char}

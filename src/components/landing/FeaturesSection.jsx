@@ -61,12 +61,7 @@ export default function FeaturesSection() {
       marginTop: "5rem",
       animation: "fadeUp 0.7s 0.2s cubic-bezier(0.16,1,0.3,1) both",
     }}>
-      <p style={{
-        fontSize: "0.68rem", color: "var(--text3)",
-        textTransform: "uppercase", letterSpacing: "0.12em",
-        fontWeight: 600, marginBottom: "0.6rem",
-        fontFamily: "var(--font-mono)",
-      }}>
+      <p className="eyebrow" style={{ marginBottom: "0.6rem" }}>
         Why Kanzen
       </p>
       <h2 style={{
@@ -84,16 +79,9 @@ export default function FeaturesSection() {
         gap: "1rem",
       }}>
         {FEATURES.map(f => (
-          <div key={f.title} style={{
-            background: "var(--surface)", border: "1px solid var(--border)",
-            borderRadius: 10, padding: "1.5rem",
-            boxShadow: "var(--shadow-card)", transition: "border-color 0.2s, transform 0.2s",
-          }}
-            onMouseOver={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-            onMouseOut={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "translateY(0)"; }}
-          >
+          <div key={f.title} className="card raised card-hover" style={{ borderRadius: 10, padding: "1.5rem" }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "0.85rem" }}>
-              <span style={{ fontSize: 22 }}>{f.icon}</span>
+              <span aria-hidden="true" style={{ fontSize: 22 }}>{f.icon}</span>
               <span style={{
                 fontSize: "0.65rem", padding: "0.15rem 0.55rem",
                 background: f.tagBg, border: `1px solid ${f.tagBorder}`,

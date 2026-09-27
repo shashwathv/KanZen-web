@@ -1,4 +1,11 @@
 import { Link } from "react-router-dom";
+import BrandMark from "./BrandMark";
+
+const LINKS = [
+  { label: "Tool", to: "/app" },
+  { label: "Dashboard", to: "/dashboard" },
+  { label: "GitHub", to: "https://github.com/shashwathv/KanZen", external: true },
+];
 
 export default function Footer() {
   return (
@@ -13,13 +20,7 @@ export default function Footer() {
         flexWrap: "wrap", gap: "1rem",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.55rem" }}>
-          <div style={{
-            width: 24, height: 24, background: "var(--seal)", borderRadius: 5,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 11, fontWeight: 700, color: "#F5F0E6", fontFamily: "var(--font-display)",
-          }}>
-            漢
-          </div>
+          <BrandMark size={24} />
           <span style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "0.92rem", letterSpacing: "-0.01em" }}>
             Kanzen
           </span>
@@ -29,20 +30,10 @@ export default function Footer() {
         </div>
 
         <div style={{ display: "flex", gap: "1.5rem" }}>
-          {[
-            { label: "Tool", to: "/app" },
-            { label: "Dashboard", to: "/dashboard" },
-            { label: "GitHub", to: "https://github.com/shashwathv/KanZen", external: true },
-          ].map(l => (
+          {LINKS.map(l => (
             l.external
-              ? <a key={l.label} href={l.to} target="_blank" rel="noreferrer" style={{ fontSize: "0.8rem", color: "var(--text3)", textDecoration: "none" }}
-                  onMouseOver={e => e.currentTarget.style.color = "var(--text1)"}
-                  onMouseOut={e => e.currentTarget.style.color = "var(--text3)"}
-                >{l.label}</a>
-              : <Link key={l.label} to={l.to} style={{ fontSize: "0.8rem", color: "var(--text3)", textDecoration: "none" }}
-                  onMouseOver={e => e.currentTarget.style.color = "var(--text1)"}
-                  onMouseOut={e => e.currentTarget.style.color = "var(--text3)"}
-                >{l.label}</Link>
+              ? <a key={l.label} href={l.to} target="_blank" rel="noreferrer" className="link-muted" style={{ fontSize: "0.8rem" }}>{l.label}</a>
+              : <Link key={l.label} to={l.to} className="link-muted" style={{ fontSize: "0.8rem" }}>{l.label}</Link>
           ))}
         </div>
       </div>

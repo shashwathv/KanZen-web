@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
-import GridBackground from "../components/landing/GridBackground";
-import { supabase } from "../lib/supabase";
+import { supabase, getAccessToken } from "../lib/supabase";
+import { readJson, apiErrorMessage } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE } from "../constants";
 
@@ -12,15 +11,11 @@ function formatDate(iso) {
 }
 
 function DeckCard({ deck, onRemove, onDownload, isBusy }) {
+  // Deleting is permanent, so the ✕ only arms it; a second, explicit click confirms.
+  const [confirming, setConfirming] = useState(false);
+
   return (
-    <div style={{
-      background: "var(--surface)", border: "1px solid var(--border)",
-      borderRadius: 10, padding: "1.25rem",
-      boxShadow: "var(--shadow-card)", transition: "border-color 0.15s, transform 0.15s",
-    }}
-      onMouseOver={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-      onMouseOut={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "translateY(0)"; }}
-    >
+    <div className="card raised card-hover" style={{ borderRadius: 10, padding: "1.25rem" }}>
       <div style={{
         height: 84, position: "relative", background: "var(--surface2)",
         borderRadius: 7, marginBottom: "1rem", overflow: "hidden",
@@ -29,7 +24,7 @@ function DeckCard({ deck, onRemove, onDownload, isBusy }) {
       }}>
         <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: "var(--border-hover)" }} />
         <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: "var(--border-hover)" }} />
-        <span style={{ position: "relative", fontSize: 26, color: "var(--text2)", letterSpacing: "0.1em" }}>
+        <span aria-hidden="true" style={{ position: "relative", fontSize: 26, color: "var(--text2)", letterSpacing: "0.1em" }}>
           漢字
         </span>
       </div>
@@ -54,78 +49,87 @@ function DeckCard({ deck, onRemove, onDownload, isBusy }) {
         borderTop: "1px solid var(--border)",
         display: "flex", gap: "0.5rem",
       }}>
-        <button
-          onClick={onDownload}
-          disabled={isBusy}
-          style={{
-            flex: 1, padding: "0.45rem",
-            background: "var(--jade)", color: "#0B0A08",
-            border: "none", borderRadius: 6,
-            fontSize: "0.75rem", fontWeight: 600,
-            cursor: isBusy ? "not-allowed" : "pointer", fontFamily: "var(--font-body)",
-            opacity: isBusy ? 0.6 : 1, transition: "opacity 0.15s",
-          }}
-        >
-          ↓ Download
-        </button>
-        <button
-          onClick={onRemove}
-          disabled={isBusy}
-          title="Remove this deck"
-          style={{
-            padding: "0.45rem 0.75rem",
-            background: "var(--surface2)", color: "var(--text2)",
-            border: "1px solid var(--border)", borderRadius: 6,
-            fontSize: "0.75rem", cursor: isBusy ? "not-allowed" : "pointer",
-            fontFamily: "var(--font-body)", transition: "all 0.15s",
-            opacity: isBusy ? 0.6 : 1,
-          }}
-          onMouseOver={e => { e.currentTarget.style.borderColor = "var(--flame-border)"; e.currentTarget.style.color = "var(--flame)"; }}
-          onMouseOut={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text2)"; }}
-        >
-          ✕
-        </button>
+        {confirming ? (
+          <>
+            <button
+              className="btn-primary"
+              onClick={onRemove}
+              disabled={isBusy}
+              style={{
+                flex: 1, padding: "0.45rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600,
+                background: "var(--flame)", color: "#fff", boxShadow: "none",
+              }}
+            >
+              {isBusy ? "Deleting…" : "Delete deck"}
+            </button>
+            <button
+              className="btn-secondary"
+              onClick={() => setConfirming(false)}
+              disabled={isBusy}
+              style={{ padding: "0.45rem 0.75rem", borderRadius: 6, fontSize: "0.75rem" }}
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className="btn-primary"
+              onClick={onDownload}
+              disabled={isBusy}
+              style={{ flex: 1, padding: "0.45rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600, boxShadow: "none" }}
+            >
+              ↓ Download
+            </button>
+            <button
+              className="btn-secondary btn-danger"
+              onClick={() => setConfirming(true)}
+              disabled={isBusy}
+              title="Remove this deck"
+              aria-label={`Remove deck ${deck.name}`}
+              style={{ padding: "0.45rem 0.75rem", borderRadius: 6, fontSize: "0.75rem" }}
+            >
+              ✕
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
 export default function Dashboard() {
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
-  const [decks, setDecks] = useState([]);
-  const [decksLoading, setDecksLoading] = useState(true);
+  // Decks are tagged with the user they were fetched for, so signing out or
+  // switching accounts shows the right state immediately — no reset effect.
+  const [loaded, setLoaded] = useState({ userId: null, decks: [] });
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState(null);
   const { user, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
+  const decksLoading = userId !== null && loaded.userId !== userId;
+  const decks = userId !== null && loaded.userId === userId ? loaded.decks : [];
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (!user) {
-      setDecks([]);
-      setDecksLoading(false);
-      return;
-    }
-    setDecksLoading(true);
+    if (!userId) return;
+    let cancelled = false;
     supabase
       .from("decks")
       .select("*")
       .order("created_at", { ascending: false })
       .then(({ data, error: fetchError }) => {
+        if (cancelled) return;
         if (fetchError) setError(fetchError.message);
-        else setDecks(data || []);
-        setDecksLoading(false);
+        setLoaded({ userId, decks: fetchError ? [] : data || [] });
       });
-  }, [user]);
+    return () => { cancelled = true; };
+  }, [userId]);
 
   const authedFetch = useCallback(async (path, options = {}) => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const token = await getAccessToken();
+    if (!token) throw new Error("Your session has expired — please sign in again.");
     return fetch(`${API_BASE}${path}`, {
       ...options,
-      headers: { ...options.headers, Authorization: `Bearer ${session?.access_token}` },
+      headers: { ...options.headers, Authorization: `Bearer ${token}` },
     });
   }, []);
 
@@ -134,8 +138,8 @@ export default function Dashboard() {
     setError(null);
     try {
       const res = await authedFetch(`/decks/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to remove that deck.");
-      setDecks(prev => prev.filter(d => d.id !== id));
+      if (!res.ok) throw new Error(apiErrorMessage(await readJson(res), "Failed to remove that deck."));
+      setLoaded(prev => ({ ...prev, decks: prev.decks.filter(d => d.id !== id) }));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -144,14 +148,22 @@ export default function Dashboard() {
   }, [authedFetch]);
 
   const handleDownload = useCallback(async (id) => {
+    // Open the tab now, while the click still counts as a user gesture —
+    // Safari blocks window.open() once it happens after an await.
+    const win = window.open("", "_blank");
+    if (win) win.opener = null;
     setBusyId(id);
     setError(null);
     try {
       const res = await authedFetch(`/decks/${id}/download`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed to generate a download link.");
-      window.open(data.download_url, "_blank", "noreferrer");
+      const data = await readJson(res);
+      if (!res.ok || !data.download_url) {
+        throw new Error(apiErrorMessage(data, "Failed to generate a download link."));
+      }
+      if (win) win.location.href = data.download_url;
+      else window.location.href = data.download_url;
     } catch (err) {
+      win?.close();
       setError(err.message);
     } finally {
       setBusyId(null);
@@ -161,11 +173,8 @@ export default function Dashboard() {
   const totalCards = decks.reduce((sum, d) => sum + d.card_count, 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", transition: "background 0.3s", position: "relative" }}>
-      <GridBackground />
-      <div style={{ position: "relative", zIndex: 10 }}>
-      <Header theme={theme} onToggleTheme={() => setTheme(t => t === "dark" ? "light" : "dark")} />
-      <main className="page-main" style={{ maxWidth: 900, margin: "0 auto", padding: "3rem 1.5rem" }}>
+    <>
+      <main className="page-main" style={{ maxWidth: 900, paddingBlock: "3rem" }}>
 
         <div style={{
           display: "flex", alignItems: "flex-start",
@@ -178,30 +187,22 @@ export default function Dashboard() {
               Your decks
             </h1>
             <p style={{ color: "var(--text2)", fontSize: "0.85rem" }}>
-              {!user
+              {authLoading || decksLoading
+                ? " " /* hold the line's height without flashing the wrong message */
+                : !user
                 ? "Sign in to see decks saved here"
                 : decks.length === 0
                   ? "No decks yet — generate your first one"
                   : `${decks.length} deck${decks.length === 1 ? "" : "s"} · ${totalCards} cards total`}
             </p>
           </div>
-          <Link to="/app" style={{
-            textDecoration: "none",
-            background: "var(--jade)", color: "#0B0A08",
-            padding: "0.65rem 1.25rem", borderRadius: 8,
-            fontWeight: 700, fontSize: "0.88rem",
-            boxShadow: "0 2px 12px rgba(0,200,150,0.2)",
-            transition: "all 0.15s",
-          }}
-            onMouseOver={e => { e.currentTarget.style.opacity = "0.88"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-            onMouseOut={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "translateY(0)"; }}
-          >
+          <Link to="/app" className="btn-primary" style={{ padding: "0.65rem 1.25rem", fontSize: "0.88rem" }}>
             + New deck
           </Link>
         </div>
 
         {error && (
-          <p style={{
+          <p role="alert" style={{
             color: "var(--flame)", fontSize: "0.82rem", marginBottom: "1rem",
             background: "var(--flame-dim)", border: "1px solid var(--flame-border)",
             borderRadius: 8, padding: "0.6rem 0.85rem",
@@ -211,21 +212,15 @@ export default function Dashboard() {
         )}
 
         {!authLoading && !user ? (
-          <div style={{
+          <div className="card" style={{
             padding: "1.25rem 1.5rem",
-            background: "var(--surface)", border: "1px solid var(--border)",
             borderRadius: 10,
             animation: "fadeUp 0.6s 0.1s cubic-bezier(0.16,1,0.3,1) both",
           }}>
             <p style={{ fontSize: "0.85rem", color: "var(--text2)", lineHeight: 1.7, marginBottom: "1rem" }}>
               Decks you generate while signed in are saved here automatically. You can still use the tool without an account — you just won't see a history of what you've made.
             </p>
-            <Link to="/login" style={{
-              display: "inline-block", textDecoration: "none",
-              background: "var(--jade)", color: "#0B0A08",
-              padding: "0.6rem 1.25rem", borderRadius: 8,
-              fontWeight: 700, fontSize: "0.85rem",
-            }}>
+            <Link to="/login" className="btn-primary" style={{ display: "inline-block", padding: "0.6rem 1.25rem", fontSize: "0.85rem" }}>
               Sign in
             </Link>
           </div>
@@ -250,28 +245,14 @@ export default function Dashboard() {
               ))
             )}
 
-            <Link to="/app" style={{
-              textDecoration: "none",
-              background: "transparent",
-              border: "2px dashed var(--border-hover)",
-              borderRadius: 10, padding: "1.25rem",
-              display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              gap: "0.5rem", minHeight: 200,
-              cursor: "pointer", transition: "all 0.2s",
-              color: "var(--text3)",
-            }}
-              onMouseOver={e => { e.currentTarget.style.borderColor = "var(--jade-border)"; e.currentTarget.style.color = "var(--jade)"; }}
-              onMouseOut={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--text3)"; }}
-            >
-              <span style={{ fontSize: 28 }}>+</span>
+            <Link to="/app" className="tile-dashed">
+              <span aria-hidden="true" style={{ fontSize: 28 }}>+</span>
               <span style={{ fontSize: "0.82rem", fontWeight: 600 }}>Generate new deck</span>
             </Link>
           </div>
         )}
       </main>
       <Footer />
-      </div>
-    </div>
+    </>
   );
 }

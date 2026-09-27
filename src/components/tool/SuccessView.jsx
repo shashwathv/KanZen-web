@@ -8,7 +8,7 @@ export default function SuccessView({ stats, downloadUrl, savedToDashboard, onRe
         marginBottom: "1rem",
         display: "flex", alignItems: "center", gap: "1rem",
       }}>
-        <div style={{
+        <div aria-hidden="true" style={{
           width: 44, height: 44, borderRadius: "50%",
           background: "var(--jade)",
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -35,10 +35,7 @@ export default function SuccessView({ stats, downloadUrl, savedToDashboard, onRe
         </p>
       )}
 
-      <div className="success-stats" style={{
-        display: "grid", gridTemplateColumns: "1fr 1fr 1fr",
-        gap: "0.6rem", marginBottom: "1rem",
-      }}>
+      <div className="success-stats">
         {[
           { label: "Created", value: stats?.created ?? "—", color: "var(--jade)" },
           { label: "Skipped", value: stats?.skipped ?? "—", color: "var(--text3)" },
@@ -66,37 +63,24 @@ export default function SuccessView({ stats, downloadUrl, savedToDashboard, onRe
         ))}
       </div>
 
-      
       <a
         href={downloadUrl}
         target="_blank"
         rel="noreferrer"
+        className="btn-primary"
         style={{
           display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
-          background: "var(--jade)", color: "#0B0A08", textDecoration: "none",
-          padding: "0.9rem 1.5rem", borderRadius: 8,
-          fontWeight: 800, fontSize: "0.95rem",
-          letterSpacing: "-0.02em", marginBottom: "0.6rem",
-          transition: "opacity 0.15s",
-          fontFamily: "var(--font-body)",
+          padding: "0.9rem 1.5rem", marginBottom: "0.6rem",
+          fontWeight: 800, fontSize: "0.95rem", letterSpacing: "-0.02em",
         }}
-        onMouseOver={e => e.currentTarget.style.opacity = "0.88"}
-        onMouseOut={e => e.currentTarget.style.opacity = "1"}
       >
-        <span>↓</span> Download .apkg deck
+        <span aria-hidden="true">↓</span> Download .apkg deck
       </a>
 
       <button
+        className="btn-ghost"
         onClick={onReset}
-        style={{
-          display: "block", width: "100%",
-          background: "transparent", color: "var(--text3)",
-          border: "1px solid var(--border)", padding: "0.75rem",
-          borderRadius: 8, cursor: "pointer", fontSize: "0.85rem",
-          transition: "all 0.15s", fontFamily: "var(--font-body)",
-        }}
-        onMouseOver={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--text2)"; }}
-        onMouseOut={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text3)"; }}
+        style={{ display: "block", width: "100%", padding: "0.75rem", fontSize: "0.85rem" }}
       >
         Process another image
       </button>

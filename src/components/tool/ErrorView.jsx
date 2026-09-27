@@ -1,12 +1,12 @@
 export default function ErrorView({ message, onReset }) {
   return (
-    <div style={{
+    <div role="alert" style={{
       animation: "fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards",
       background: "var(--flame-dim)",
       border: "1px solid var(--flame-border)",
       borderRadius: 12, padding: "2rem", textAlign: "center",
     }}>
-      <div style={{
+      <div aria-hidden="true" style={{
         width: 48, height: 48, borderRadius: 10,
         background: "var(--flame-dim)",
         display: "flex", alignItems: "center", justifyContent: "center",
@@ -28,15 +28,12 @@ export default function ErrorView({ message, onReset }) {
         {message || "Something went wrong. Please try again with a clearer image."}
       </p>
       <button
+        className="btn-primary"
         onClick={onReset}
         style={{
-          background: "var(--flame)", color: "#fff", border: "none",
-          padding: "0.7rem 1.75rem", borderRadius: 7, cursor: "pointer",
-          fontWeight: 700, fontSize: "0.88rem",
-          fontFamily: "var(--font-body)", transition: "opacity 0.15s",
+          background: "var(--flame)", color: "#fff", boxShadow: "none",
+          padding: "0.7rem 1.75rem", borderRadius: 7, fontSize: "0.88rem",
         }}
-        onMouseOver={e => e.currentTarget.style.opacity = "0.85"}
-        onMouseOut={e => e.currentTarget.style.opacity = "1"}
       >
         Try again
       </button>

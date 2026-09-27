@@ -79,41 +79,214 @@ html, body { height: 100%; background: var(--bg); color: var(--text1); font-fami
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
-/* Retrofitted responsive layer. Components are styled inline throughout,
-   which wins specificity over plain classes — these overrides need
-   !important to actually take effect at each breakpoint. */
+/* ── Shared building blocks ──────────────────────────────────────────────
+   Hover/focus states live here rather than in onMouseOver handlers, so they
+   also apply to keyboard focus and don't fight inline styles. Components add
+   size-specific values (padding, font-size) inline; anything a :hover rule
+   changes must stay out of inline styles or it will win on specificity. */
+
+.card { background: var(--surface); border: 1px solid var(--border); }
+.raised { box-shadow: var(--shadow-card); }
+.card-hover { transition: border-color 0.2s, transform 0.2s; }
+.card-hover:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+.btn-primary {
+  background: var(--jade); color: #0B0A08;
+  border: none; border-radius: 8px;
+  font-family: var(--font-body); font-weight: 700; letter-spacing: -0.01em;
+  text-decoration: none; cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,200,150,0.25);
+  transition: opacity 0.15s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-secondary {
+  background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border); border-radius: 7px;
+  font-family: var(--font-body); font-weight: 500;
+  text-decoration: none; cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-secondary:hover:not(:disabled) { border-color: var(--border-hover); color: var(--text1); }
+.btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; }
+/* Modifier for destructive actions (remove, sign out). */
+.btn-danger:hover:not(:disabled) { border-color: var(--flame-border); color: var(--flame); }
+
+.btn-ghost {
+  background: transparent; color: var(--text3);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-family: var(--font-body); cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-ghost:hover:not(:disabled) { border-color: var(--border-hover); color: var(--text2); }
+.btn-ghost:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-icon-danger {
+  background: transparent; border: none; border-radius: 6px;
+  color: var(--text3); cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-icon-danger:hover { color: var(--flame); background: var(--flame-dim); }
+
+.link-muted { color: var(--text3); text-decoration: none; transition: color 0.15s; }
+.link-muted:hover { color: var(--text1); }
+
+.input {
+  width: 100%;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text1);
+  font-family: var(--font-body);
+  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input:focus { border-color: var(--jade-border); box-shadow: 0 0 0 3px var(--jade-dim); }
+
+.eyebrow {
+  font-size: 0.68rem; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  font-weight: 600; font-family: var(--font-mono);
+}
+.field-label {
+  display: block; font-size: 0.68rem; font-weight: 600;
+  color: var(--text3); text-transform: uppercase;
+  letter-spacing: 0.06em; margin-bottom: 0.3rem;
+}
+
+.brand-mark {
+  background: var(--seal); color: #F5F0E6;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-weight: 700; font-family: var(--font-display);
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────── */
+
+.app-content { position: relative; z-index: 10; }
+.page-main { margin: 0 auto; padding-inline: 1.5rem; }
+.login-main { padding-block: 5rem; }
+
+.header-bar {
+  position: sticky; top: 0; z-index: 50;
+  padding: 1.05rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+.header-bar.scrolled { border-bottom-color: var(--border); background: var(--surface); backdrop-filter: blur(16px); }
+
+.header-nav { display: flex; gap: 0.25rem; }
+.nav-link {
+  text-decoration: none; font-size: 0.82rem; font-weight: 400;
+  color: var(--text3); padding: 0.35rem 0.75rem; border-radius: 7px;
+  background: transparent; border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.nav-link:hover { color: var(--text2); background: var(--surface2); }
+.nav-link.active { font-weight: 600; color: var(--text1); background: var(--surface2); border-color: var(--border); }
+
+.header-status {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 99px; padding: 0.25rem 0.65rem;
+}
+.header-signin { display: flex; align-items: center; gap: 0.5rem; }
 .header-menu-btn { display: none; }
+
+.header-mobile-menu {
+  position: absolute; top: 100%; left: 0; right: 0;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  padding: 0.75rem 1.25rem 1.25rem;
+  display: flex; flex-direction: column; gap: 0.25rem;
+  animation: fadeUp 0.2s ease forwards;
+}
+.mobile-nav-link {
+  text-decoration: none; padding: 0.7rem 0.5rem;
+  font-size: 0.95rem; color: var(--text1); border-radius: 8px;
+}
+.mobile-nav-link.active { font-weight: 600; color: var(--jade); background: var(--jade-dim); }
+
+/* ── Page-specific ───────────────────────────────────────────────────── */
+
+.hero-grid {
+  display: grid; grid-template-columns: 1.15fr 0.85fr;
+  gap: 2.5rem; align-items: center; margin-bottom: 4.5rem;
+}
+.hero-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: var(--jade-dim); border: 1px solid var(--jade-border);
+  border-radius: 99px; padding: 0.3rem 0.85rem; margin-bottom: 1.5rem;
+  font-size: 0.7rem; color: var(--jade); font-weight: 600;
+  letter-spacing: 0.04em; font-family: var(--font-mono);
+}
+
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem; margin-top: 2.5rem; margin-bottom: 3rem;
+}
+
 .upload-camera-btn { display: none; }
 
+.card-editor-row {
+  display: flex; gap: 1rem; position: relative;
+  border-radius: 10px; padding: 1.1rem; margin-bottom: 0.75rem;
+}
+/* --kanji-font-size is set per card from the word length (see ReviewView). */
+.card-editor-kanji {
+  font-size: var(--kanji-font-size, 2.4rem); font-weight: 800; line-height: 1.15;
+  color: var(--text1); flex-shrink: 0; min-width: 64px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+  padding: 0.5rem 0.6rem; white-space: nowrap;
+}
+.card-editor-remove {
+  flex-shrink: 0; width: 28px; height: 28px; align-self: flex-start;
+  font-size: 0.8rem;
+}
+.review-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+
+.success-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; margin-bottom: 1rem; }
+
+.tile-dashed {
+  text-decoration: none; color: var(--text3);
+  background: transparent; border: 2px dashed var(--border-hover);
+  border-radius: 10px; padding: 1.25rem; min-height: 200px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;
+  cursor: pointer; transition: all 0.2s;
+}
+.tile-dashed:hover { border-color: var(--jade-border); color: var(--jade); }
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+
 @media (max-width: 720px) {
-  .header-nav { display: none !important; }
-  .header-status { display: none !important; }
-  .header-signin { display: none !important; }
-  .header-menu-btn { display: flex !important; }
-  .hero-cards { display: none !important; }
-  .hero-grid { grid-template-columns: 1fr !important; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  .upload-camera-btn { display: flex !important; }
+  .header-nav, .header-status, .header-signin { display: none; }
+  .header-menu-btn { display: flex; }
+  .hero-cards { display: none; }
+  .hero-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .upload-camera-btn { display: flex; }
 }
 
 @media (max-width: 640px) {
-  .header-bar { padding: 0.9rem 1.1rem !important; }
-  .page-main { padding-left: 1.1rem !important; padding-right: 1.1rem !important; }
-  .login-main { padding-top: 2.5rem !important; }
-  .card-editor-row { flex-direction: column !important; }
-  .card-editor-kanji { width: 100% !important; min-height: 56px !important; height: auto !important; font-size: min(1.8rem, var(--kanji-font-size, 1.8rem)) !important; }
-  .card-editor-remove { position: absolute !important; top: 0.9rem !important; right: 0.9rem !important; z-index: 1 !important; }
+  .header-bar { padding: 0.9rem 1.1rem; }
+  .page-main { padding-inline: 1.1rem; }
+  .login-main { padding-top: 2.5rem; }
+  .card-editor-row { flex-direction: column; }
+  .card-editor-kanji { width: 100%; min-height: 56px; font-size: min(1.8rem, var(--kanji-font-size, 1.8rem)); }
+  .card-editor-remove { position: absolute; top: 0.9rem; right: 0.9rem; z-index: 1; }
 }
 
 @media (max-width: 480px) {
-  .review-fields { grid-template-columns: 1fr !important; }
-  .success-stats { grid-template-columns: 1fr 1fr !important; }
-  .hero-eyebrow { font-size: 0.62rem !important; padding: 0.25rem 0.6rem !important; }
+  .review-fields { grid-template-columns: 1fr; }
+  .success-stats { grid-template-columns: 1fr 1fr; }
+  .hero-eyebrow { font-size: 0.62rem; padding: 0.25rem 0.6rem; }
 }
 
 @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-@keyframes spin { to { transform:rotate(360deg); } }
 @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes gridScroll { from{transform:translateY(0)} to{transform:translateY(-50%)} }
 @keyframes shimmer { 0%{opacity:0.3} 50%{opacity:0.7} 100%{opacity:0.3} }
