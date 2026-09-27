@@ -147,132 +147,66 @@ export default function Login() {
   }, [gisReady, theme]);
 
   const showGoogle = GOOGLE_ENABLED && !googleFailed;
+  const isLogin = mode === "login";
 
   return (
-    <main className="page-main login-main" style={{
-      maxWidth: 420,
-      animation: "fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards",
-    }}>
-      <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-        <BrandMark size={44} style={{ margin: "0 auto 1rem" }} />
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.7rem", fontWeight: 600, letterSpacing: "-0.01em", marginBottom: "0.4rem" }}>
-          {mode === "login" ? "Welcome back" : "Create account"}
-        </h1>
-        <p style={{ color: "var(--text2)", fontSize: "0.85rem" }}>
-          {mode === "login" ? "Sign in to access your decks" : "Free forever, no credit card needed"}
-        </p>
-      </div>
+    <div className="page auth">
+      <section className="sheet auth-sheet">
+        <BrandMark size={44} />
+        <h1 className="display">{isLogin ? "Sign in" : "Create an account"}</h1>
+        <p>Keep a list of every deck you make, and download any of them again later.</p>
 
-      <div className="card raised" style={{ borderRadius: 14, padding: "2rem" }}>
         {!supabaseConfigured && (
-          <p role="alert" style={{
-            fontSize: "0.8rem", color: "var(--gold)", marginBottom: "1.25rem",
-            background: "var(--gold-dim)", border: "1px solid var(--gold-border)",
-            borderRadius: 8, padding: "0.6rem 0.85rem",
-          }}>
-            Accounts aren't available right now. You can still use the tool without signing in.
+          <p className="notice" role="alert" style={{ marginTop: "1.25rem" }}>
+            Accounts aren't available right now. You can still make decks without signing in.
           </p>
         )}
-        <div role="group" aria-label="Account mode" style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: "0.4rem", marginBottom: "1.75rem",
-          background: "var(--surface2)", padding: "0.3rem",
-          borderRadius: 8, border: "1px solid var(--border)",
-        }}>
-          {["login", "signup"].map(m => (
-            <button key={m} type="button" aria-pressed={mode === m} onClick={() => switchMode(m)} style={{
-              padding: "0.55rem", borderRadius: 8,
-              background: mode === m ? "var(--surface)" : "transparent",
-              color: mode === m ? "var(--text1)" : "var(--text3)",
-              fontWeight: mode === m ? 600 : 400,
-              fontSize: "0.85rem", cursor: "pointer",
-              boxShadow: mode === m ? "var(--shadow-card)" : "none",
-              transition: "all 0.15s", fontFamily: "var(--font-body)",
-              border: mode === m ? "1px solid var(--border)" : "1px solid transparent",
-            }}>
-              {m === "login" ? "Sign in" : "Sign up"}
-            </button>
-          ))}
+
+        <div className="segmented" role="group" aria-label="Account">
+          <button type="button" aria-pressed={isLogin} onClick={() => switchMode("login")}>Sign in</button>
+          <button type="button" aria-pressed={!isLogin} onClick={() => switchMode("signup")}>Create account</button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-          <div>
-            <label htmlFor="login-email" style={{ fontSize: "0.78rem", color: "var(--text2)", marginBottom: "0.4rem", display: "block", fontWeight: 500 }}>
-              Email
-            </label>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div className="field">
+            <label htmlFor="login-email" className="field-label">Email</label>
             <input
-              id="login-email"
-              className="input"
+              id="login-email" className="input"
               type="email" required autoComplete="email"
               value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              style={{ padding: "0.75rem 1rem", fontSize: "0.9rem" }}
             />
           </div>
-          <div>
-            <label htmlFor="login-password" style={{ fontSize: "0.78rem", color: "var(--text2)", marginBottom: "0.4rem", display: "block", fontWeight: 500 }}>
-              Password
-            </label>
+          <div className="field">
+            <label htmlFor="login-password" className="field-label">Password</label>
             <input
-              id="login-password"
-              className="input"
+              id="login-password" className="input"
               type="password" required minLength={6}
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              autoComplete={isLogin ? "current-password" : "new-password"}
+              aria-describedby={isLogin ? undefined : "password-hint"}
               value={password} onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              style={{ padding: "0.75rem 1rem", fontSize: "0.9rem" }}
             />
+            {!isLogin && <p id="password-hint" className="muted small" style={{ marginTop: "0.3rem" }}>At least 6 characters.</p>}
           </div>
 
-          {error && (
-            <p role="alert" style={{ fontSize: "0.8rem", color: "var(--flame)", margin: 0 }}>{error}</p>
-          )}
-          {notice && (
-            <p role="status" style={{ fontSize: "0.8rem", color: "var(--jade)", margin: 0 }}>{notice}</p>
-          )}
+          {error && <p className="notice error" role="alert">{error}</p>}
+          {notice && <p className="notice" role="status">{notice}</p>}
 
-          <button type="submit" className="btn-primary" disabled={submitting || !supabaseConfigured} style={{
-            width: "100%", padding: "0.8rem", fontSize: "0.92rem", marginTop: "0.25rem",
-          }}>
-            {submitting ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
+          <button type="submit" className="btn btn-ink btn-block" disabled={submitting || !supabaseConfigured}>
+            {submitting ? "One moment…" : isLogin ? "Sign in" : "Create account"}
           </button>
         </form>
 
         {showGoogle && (
           <>
-            <div style={{
-              display: "flex", alignItems: "center", gap: "0.75rem",
-              margin: "1.25rem 0",
-            }}>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-              <span style={{ fontSize: "0.72rem", color: "var(--text3)" }}>or continue with</span>
-              <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-            </div>
-
-            <div ref={googleButtonRef} style={{ display: "flex", justifyContent: "center" }} />
+            <p className="or-divider">or</p>
+            <div ref={googleButtonRef} className="google-slot" />
           </>
         )}
+      </section>
 
-        <p style={{
-          marginTop: "1.25rem", textAlign: "center",
-          fontSize: "0.75rem", color: "var(--text3)",
-        }}>
-          {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-          <button type="button" onClick={() => switchMode(mode === "login" ? "signup" : "login")} style={{
-            background: "none", border: "none", color: "var(--jade)",
-            cursor: "pointer", fontSize: "0.75rem", fontFamily: "var(--font-body)",
-            fontWeight: 600, padding: 0,
-          }}>
-            {mode === "login" ? "Sign up" : "Sign in"}
-          </button>
-        </p>
-      </div>
-
-      <p style={{ textAlign: "center", marginTop: "1.5rem", fontSize: "0.75rem" }}>
-        <Link to="/app" className="link-muted">
-          Continue without account →
-        </Link>
+      <p className="auth-skip">
+        <Link to="/app">Make a deck without an account</Link>
       </p>
-    </main>
+    </div>
   );
 }

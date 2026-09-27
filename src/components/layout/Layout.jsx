@@ -1,21 +1,28 @@
-import { Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { Suspense, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
-import GridBackground from "../landing/GridBackground";
+import Footer from "./Footer";
+import PaperBackground from "./PaperBackground";
 
-// Shared shell for every route. Keeping the header here (rather than in each
-// page) means it stays mounted across navigation, so the API health check
-// and scroll state aren't reset on every page change.
+// Shared shell for every route. The header stays mounted across navigation,
+// so each page change only swaps the content — scroll back to the top when it does.
 export default function Layout() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
     <>
-      <GridBackground />
-      <div className="app-content">
-        <Header />
+      <PaperBackground />
+      <Header />
+      <main className="site-main">
         <Suspense fallback={null}>
           <Outlet />
         </Suspense>
-      </div>
+      </main>
+      <Footer />
     </>
   );
 }

@@ -13,14 +13,14 @@ export const API_BASE = `${API_URL}/v1`;
 
 export const MAX_IMAGES_PER_UPLOAD = 5;
 
-export const KANJI_BG = [
-  "漢", "字", "語", "学", "読", "書", "話", "聞",
-  "見", "知", "力", "心", "人", "日", "本",
-];
+// Written into the practice squares while a job is processing.
+export const WRITING_KANJI = ["漢", "字", "読", "書", "学"];
 
+// Shown while a job is processing. The backend doesn't report progress, so
+// these advance on a timer (see useJobPoller) — keep the wording honest.
 export const STEPS = [
-  { id: "upload",  label: "Image received", icon: "📷", detail: "Uploaded and queued for the vision model" },
-  { id: "vision",  label: "Reading the page", icon: "👁️", detail: "Scanning layout, skipping stroke-order diagrams" },
-  { id: "extract", label: "Identifying kanji", icon: "漢", detail: "Cross-referencing readings against KanjiDic2" },
-  { id: "cards",   label: "Building cards", icon: "🎴", detail: "Assembling meanings, readings and examples" },
+  { id: "upload",  label: "Photos received",     detail: "Your pages are queued to be read" },
+  { id: "vision",  label: "Reading the page",    detail: "Finding the kanji and skipping stroke-order diagrams" },
+  { id: "extract", label: "Looking up readings", detail: "Checking on-yomi and kun-yomi against KANJIDIC2" },
+  { id: "cards",   label: "Writing cards",       detail: "Adding meanings and example sentences" },
 ];

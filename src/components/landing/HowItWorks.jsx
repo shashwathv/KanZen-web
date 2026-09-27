@@ -1,59 +1,105 @@
+import KanjiBox from "../ui/KanjiBox";
+
+// Each step is shown as a small illustration of what actually happens, rather
+// than described: the photo you take, the card you check, the deck in Anki.
+
+function PhotoArt() {
+  return (
+    <div className="art-photo">
+      <div className="art-sheet">
+        <p className="art-sheet-title" lang="ja">かん字ドリル 3</p>
+        {["住", "読", "海"].map(ch => (
+          <div key={ch} className="art-row">
+            {/* One model character, then faint copies to trace — like a real drill sheet. */}
+            <KanjiBox size={28}>{ch.repeat(4)}</KanjiBox>
+            <span className="art-lines"><i /><i /></span>
+          </div>
+        ))}
+      </div>
+      <span className="viewfinder tl" /><span className="viewfinder tr" />
+      <span className="viewfinder bl" /><span className="viewfinder br" />
+    </div>
+  );
+}
+
+function CheckArt() {
+  return (
+    <div className="art-card">
+      <div className="art-card-head">
+        <KanjiBox size={42}>住</KanjiBox>
+        <p className="art-meaning">
+          <s>to life</s>
+          <span className="art-fix">to live</span>
+        </p>
+      </div>
+      <dl className="readings">
+        <div><dt className="on">On</dt><dd lang="ja">ジュウ</dd></div>
+        <div><dt className="kun">Kun</dt><dd lang="ja">す(む)</dd></div>
+      </dl>
+    </div>
+  );
+}
+
+// Anki's deck list, with its own colours for new (blue), learning (red) and due (green) cards.
+const DECKS = [
+  { name: "Chapter 3 kanji", counts: [12, 0, 0], fresh: true },
+  { name: "Chapter 2 kanji", counts: [0, 4, 21] },
+  { name: "Chapter 1 kanji", counts: [0, 0, 9] },
+];
+
+function AnkiArt() {
+  return (
+    <div className="art-anki">
+      <div className="art-anki-row art-anki-head">
+        <span>Deck</span><span>New</span><span>Learn</span><span>Due</span>
+      </div>
+      {DECKS.map(deck => (
+        <div key={deck.name} className={`art-anki-row${deck.fresh ? " fresh" : ""}`}>
+          <span className="art-anki-name">{deck.name}</span>
+          {deck.counts.map((n, i) => (
+            <span key={i} className={n === 0 ? "zero" : ["new", "learn", "due"][i]}>{n}</span>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const STEPS = [
-  { num: "01", icon: "📷", title: "Snap", desc: "Photograph any kanji study sheet, textbook page, or handout." },
-  { num: "02", icon: "👁️", title: "Read", desc: "A vision model reads the whole page at once, ignoring stroke-order diagrams and practice grids." },
-  { num: "03", icon: "🎴", title: "Extract", desc: "Every study kanji becomes a card with meaning, readings, and an example sentence." },
-  { num: "04", icon: "✏️", title: "Review", desc: "Check the generated cards and fix anything before exporting — you stay in control." },
-  { num: "05", icon: "📦", title: "Export", desc: "Download a .apkg file ready to import in Anki or AnkiDroid." },
+  {
+    art: <PhotoArt />,
+    title: "Photograph the page",
+    body: "Any worksheet, drill book or textbook page. Stroke-order diagrams are skipped, and up to five pages go into one deck.",
+  },
+  {
+    art: <CheckArt />,
+    title: "Check the cards",
+    body: "Every kanji gets a meaning, on-yomi, kun-yomi and an example sentence. Correct anything that's off before you export.",
+  },
+  {
+    art: <AnkiArt />,
+    title: "Study in Anki",
+    body: "Download one .apkg file and open it in Anki or AnkiDroid. The cards arrive as their own deck, ready to review.",
+  },
 ];
 
 export default function HowItWorks() {
   return (
-    <div style={{
-      marginTop: "4rem", paddingTop: "3rem",
-      borderTop: "1px solid var(--border)",
-      animation: "fadeUp 0.7s 0.3s cubic-bezier(0.16,1,0.3,1) both",
-    }}>
-      <p className="eyebrow" style={{ marginBottom: "2rem" }}>
-        How it works
-      </p>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+    <section id="how-it-works" className="page section">
+      <h2 className="display section-title">How it works</h2>
+      <p className="section-lede">From a page in your textbook to cards in Anki.</p>
+      <ol className="how">
         {STEPS.map((step, i) => (
-          <div key={step.num} style={{
-            display: "flex", gap: "1rem",
-            paddingBottom: i < STEPS.length - 1 ? "1.5rem" : 0,
-          }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-              <div style={{
-                position: "relative", width: 36, height: 36, borderRadius: 8,
-                background: "var(--surface2)", border: "1px solid var(--border-hover)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 16, flexShrink: 0,
-              }}>
-                {step.icon}
-                <span style={{
-                  position: "absolute", top: -6, right: -8,
-                  fontSize: "0.58rem", color: "var(--text3)", fontFamily: "var(--font-mono)",
-                  background: "var(--bg)", padding: "0 2px",
-                }}>
-                  {step.num}
-                </span>
-              </div>
-              {i < STEPS.length - 1 && (
-                <div style={{ width: 1, flex: 1, background: "var(--border)", marginTop: 4, minHeight: 20 }} />
-              )}
-            </div>
-            <div style={{ paddingTop: "0.4rem", paddingBottom: i < STEPS.length - 1 ? "0.25rem" : 0 }}>
-              <p style={{ fontWeight: 600, fontSize: "0.88rem", marginBottom: "0.2rem", letterSpacing: "-0.01em" }}>
-                {step.title}
-              </p>
-              <p style={{ fontSize: "0.8rem", color: "var(--text3)", lineHeight: 1.6 }}>
-                {step.desc}
-              </p>
-            </div>
-          </div>
+          <li key={step.title} className="how-step">
+            <div className="how-art" aria-hidden="true">{step.art}</div>
+            <h3>
+              <span className="step-dot" aria-hidden="true">{i + 1}</span>
+              {step.title}
+            </h3>
+            <p>{step.body}</p>
+          </li>
         ))}
-      </div>
-    </div>
+      </ol>
+    </section>
   );
 }

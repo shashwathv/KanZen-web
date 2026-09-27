@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import Footer from "../components/layout/Footer";
 import { supabase, getAccessToken } from "../lib/supabase";
 import { readJson, apiErrorMessage } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE } from "../constants";
+import KanjiBox from "../components/ui/KanjiBox";
+import { CloseIcon, DownloadIcon } from "../components/ui/icons";
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -15,86 +16,40 @@ function DeckCard({ deck, onRemove, onDownload, isBusy }) {
   const [confirming, setConfirming] = useState(false);
 
   return (
-    <div className="card raised card-hover" style={{ borderRadius: 10, padding: "1.25rem" }}>
-      <div style={{
-        height: 84, position: "relative", background: "var(--surface2)",
-        borderRadius: 7, marginBottom: "1rem", overflow: "hidden",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        border: "1px solid var(--border)",
-      }}>
-        <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: 1, background: "var(--border-hover)" }} />
-        <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: 1, background: "var(--border-hover)" }} />
-        <span aria-hidden="true" style={{ position: "relative", fontSize: 26, color: "var(--text2)", letterSpacing: "0.1em" }}>
-          漢字
-        </span>
-      </div>
-      <p style={{ fontWeight: 600, fontSize: "0.88rem", marginBottom: "0.3rem", letterSpacing: "-0.01em" }}>
-        {deck.name}
+    <li className="deck">
+      <p className="deck-name-text">{deck.name}</p>
+      <p className="deck-meta">
+        {deck.card_count} card{deck.card_count === 1 ? "" : "s"}, made {formatDate(deck.created_at)}
       </p>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{
-          fontSize: "0.72rem", color: "var(--jade)",
-          background: "var(--jade-dim)", border: "1px solid var(--jade-border)",
-          borderRadius: 99, padding: "0.15rem 0.5rem",
-          fontWeight: 600,
-        }}>
-          {deck.card_count} cards
-        </span>
-        <span style={{ fontSize: "0.72rem", color: "var(--text3)", fontFamily: "var(--font-mono)" }}>
-          {formatDate(deck.created_at)}
-        </span>
-      </div>
-      <div style={{
-        marginTop: "0.85rem", paddingTop: "0.85rem",
-        borderTop: "1px solid var(--border)",
-        display: "flex", gap: "0.5rem",
-      }}>
-        {confirming ? (
-          <>
-            <button
-              className="btn-primary"
-              onClick={onRemove}
-              disabled={isBusy}
-              style={{
-                flex: 1, padding: "0.45rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600,
-                background: "var(--flame)", color: "#fff", boxShadow: "none",
-              }}
-            >
+
+      {confirming ? (
+        <div className="deck-confirm">
+          <p>Delete this deck? This can't be undone.</p>
+          <div>
+            <button className="btn btn-red btn-sm" onClick={onRemove} disabled={isBusy}>
               {isBusy ? "Deleting…" : "Delete deck"}
             </button>
-            <button
-              className="btn-secondary"
-              onClick={() => setConfirming(false)}
-              disabled={isBusy}
-              style={{ padding: "0.45rem 0.75rem", borderRadius: 6, fontSize: "0.75rem" }}
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              className="btn-primary"
-              onClick={onDownload}
-              disabled={isBusy}
-              style={{ flex: 1, padding: "0.45rem", borderRadius: 6, fontSize: "0.75rem", fontWeight: 600, boxShadow: "none" }}
-            >
-              ↓ Download
-            </button>
-            <button
-              className="btn-secondary btn-danger"
-              onClick={() => setConfirming(true)}
-              disabled={isBusy}
-              title="Remove this deck"
-              aria-label={`Remove deck ${deck.name}`}
-              style={{ padding: "0.45rem 0.75rem", borderRadius: 6, fontSize: "0.75rem" }}
-            >
-              ✕
-            </button>
-          </>
-        )}
-      </div>
-    </div>
+            <button className="btn btn-plain btn-sm" onClick={() => setConfirming(false)} disabled={isBusy}>Keep it</button>
+          </div>
+        </div>
+      ) : (
+        <div className="deck-actions">
+          <button className="btn btn-outline btn-sm" onClick={onDownload} disabled={isBusy}>
+            <DownloadIcon /> {isBusy ? "Getting link…" : "Download"}
+          </button>
+          <button
+            className="icon-btn danger"
+            onClick={() => setConfirming(true)}
+            disabled={isBusy}
+            title="Delete deck"
+            aria-label={`Delete deck ${deck.name}`}
+            style={{ marginLeft: "auto" }}
+          >
+            <CloseIcon />
+          </button>
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -126,7 +81,7 @@ export default function Dashboard() {
 
   const authedFetch = useCallback(async (path, options = {}) => {
     const token = await getAccessToken();
-    if (!token) throw new Error("Your session has expired — please sign in again.");
+    if (!token) throw new Error("Your session has expired. Sign in again to manage your decks.");
     return fetch(`${API_BASE}${path}`, {
       ...options,
       headers: { ...options.headers, Authorization: `Bearer ${token}` },
@@ -138,7 +93,7 @@ export default function Dashboard() {
     setError(null);
     try {
       const res = await authedFetch(`/decks/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(apiErrorMessage(await readJson(res), "Failed to remove that deck."));
+      if (!res.ok) throw new Error(apiErrorMessage(await readJson(res), "That deck couldn't be deleted. Try again in a moment."));
       setLoaded(prev => ({ ...prev, decks: prev.decks.filter(d => d.id !== id) }));
     } catch (err) {
       setError(err.message);
@@ -158,7 +113,7 @@ export default function Dashboard() {
       const res = await authedFetch(`/decks/${id}/download`);
       const data = await readJson(res);
       if (!res.ok || !data.download_url) {
-        throw new Error(apiErrorMessage(data, "Failed to generate a download link."));
+        throw new Error(apiErrorMessage(data, "The download link couldn't be created. Try again in a moment."));
       }
       if (win) win.location.href = data.download_url;
       else window.location.href = data.download_url;
@@ -171,88 +126,57 @@ export default function Dashboard() {
   }, [authedFetch]);
 
   const totalCards = decks.reduce((sum, d) => sum + d.card_count, 0);
+  const loading = authLoading || decksLoading;
+
+  let summary = " "; // hold the line's height while loading
+  if (!loading && !user) summary = "Sign in to keep every deck you make in one place.";
+  else if (!loading && decks.length > 0) summary = `${decks.length} deck${decks.length === 1 ? "" : "s"}, ${totalCards} cards in total.`;
+  else if (!loading) summary = "Decks you make while signed in will show up here.";
 
   return (
-    <>
-      <main className="page-main" style={{ maxWidth: 900, paddingBlock: "3rem" }}>
-
-        <div style={{
-          display: "flex", alignItems: "flex-start",
-          justifyContent: "space-between", flexWrap: "wrap",
-          gap: "1rem", marginBottom: "2.5rem",
-          animation: "fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards",
-        }}>
-          <div>
-            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2rem", fontWeight: 600, letterSpacing: "-0.01em", marginBottom: "0.3rem" }}>
-              Your decks
-            </h1>
-            <p style={{ color: "var(--text2)", fontSize: "0.85rem" }}>
-              {authLoading || decksLoading
-                ? " " /* hold the line's height without flashing the wrong message */
-                : !user
-                ? "Sign in to see decks saved here"
-                : decks.length === 0
-                  ? "No decks yet — generate your first one"
-                  : `${decks.length} deck${decks.length === 1 ? "" : "s"} · ${totalCards} cards total`}
-            </p>
-          </div>
-          <Link to="/app" className="btn-primary" style={{ padding: "0.65rem 1.25rem", fontSize: "0.88rem" }}>
-            + New deck
-          </Link>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1 className="display">My decks</h1>
+          <p>{summary}</p>
         </div>
+        <Link to="/app" className="btn btn-ink">Make a deck</Link>
+      </div>
 
-        {error && (
-          <p role="alert" style={{
-            color: "var(--flame)", fontSize: "0.82rem", marginBottom: "1rem",
-            background: "var(--flame-dim)", border: "1px solid var(--flame-border)",
-            borderRadius: 8, padding: "0.6rem 0.85rem",
-          }}>
-            {error}
+      {error && <p className="notice error" role="alert" style={{ marginBottom: "1.5rem" }}>{error}</p>}
+
+      {loading ? (
+        <p className="muted">Loading your decks…</p>
+      ) : !user ? (
+        <section className="sheet empty-sheet">
+          <KanjiBox size={56} aria-hidden="true">箱</KanjiBox>
+          <h2 className="display" style={{ marginTop: "1rem" }}>Keep your decks</h2>
+          <p>
+            You can make decks without an account. Sign in and Kanzen will keep a list of
+            everything you've made, so you can download any deck again later.
           </p>
-        )}
-
-        {!authLoading && !user ? (
-          <div className="card" style={{
-            padding: "1.25rem 1.5rem",
-            borderRadius: 10,
-            animation: "fadeUp 0.6s 0.1s cubic-bezier(0.16,1,0.3,1) both",
-          }}>
-            <p style={{ fontSize: "0.85rem", color: "var(--text2)", lineHeight: 1.7, marginBottom: "1rem" }}>
-              Decks you generate while signed in are saved here automatically. You can still use the tool without an account — you just won't see a history of what you've made.
-            </p>
-            <Link to="/login" className="btn-primary" style={{ display: "inline-block", padding: "0.6rem 1.25rem", fontSize: "0.85rem" }}>
-              Sign in
-            </Link>
-          </div>
-        ) : (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: "1rem",
-            animation: "fadeUp 0.6s 0.1s cubic-bezier(0.16,1,0.3,1) both",
-          }}>
-            {decksLoading ? (
-              <p style={{ color: "var(--text3)", fontSize: "0.85rem", fontFamily: "var(--font-mono)" }}>Loading…</p>
-            ) : (
-              decks.map(deck => (
-                <DeckCard
-                  key={deck.id}
-                  deck={deck}
-                  isBusy={busyId === deck.id}
-                  onRemove={() => handleRemove(deck.id)}
-                  onDownload={() => handleDownload(deck.id)}
-                />
-              ))
-            )}
-
-            <Link to="/app" className="tile-dashed">
-              <span aria-hidden="true" style={{ fontSize: 28 }}>+</span>
-              <span style={{ fontSize: "0.82rem", fontWeight: 600 }}>Generate new deck</span>
-            </Link>
-          </div>
-        )}
-      </main>
-      <Footer />
-    </>
+          <Link to="/login" className="btn btn-ink">Sign in</Link>
+        </section>
+      ) : decks.length === 0 ? (
+        <section className="sheet empty-sheet">
+          <KanjiBox size={56} aria-hidden="true">空</KanjiBox>
+          <h2 className="display" style={{ marginTop: "1rem" }}>No decks yet</h2>
+          <p>Photograph a worksheet and your first deck will be saved here.</p>
+          <Link to="/app" className="btn btn-ink">Make your first deck</Link>
+        </section>
+      ) : (
+        <ul className="decks" aria-label="Your decks">
+          {decks.map(deck => (
+            <DeckCard
+              key={deck.id}
+              deck={deck}
+              isBusy={busyId === deck.id}
+              onRemove={() => handleRemove(deck.id)}
+              onDownload={() => handleDownload(deck.id)}
+            />
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

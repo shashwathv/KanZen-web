@@ -3,19 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kanzen — Kanji Flashcard Generator</title>
+    <title>Kanzen — turn kanji worksheets into Anki decks</title>
+    <meta name="description" content="Take a photo of a kanji worksheet or textbook page and get an Anki deck with meanings, readings and example sentences." />
     <script>
-      // Apply the saved theme before first paint so light-mode users don't
-      // see a flash of the dark theme while React loads.
-      try {
-        document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "dark");
-      } catch (e) {
-        document.documentElement.setAttribute("data-theme", "dark");
-      }
+      // Apply the theme before first paint: the saved choice if there is one,
+      // otherwise the system setting. Avoids a flash of the wrong theme.
+      (function () {
+        var theme;
+        try { theme = localStorage.getItem("theme"); } catch (e) {}
+        if (theme !== "light" && theme !== "dark") {
+          theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,340..760&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=M+PLUS+2:wght@400..800&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>

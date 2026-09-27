@@ -62,16 +62,28 @@ src/
     tool/               Upload, processing, review, success and error views
 ```
 
-## Styling conventions
+## Design
 
-Components use inline styles for one-off layout, and shared classes in
-`src/index.css` for anything with hover/focus states or repeated across pages
-(`.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.card`, `.input`, …). Keep
-properties that a `:hover` rule changes out of inline styles — inline styles
-win on specificity and would silently disable the hover.
+The look is a kanji drill book: faint graph-paper pages, indigo ink for text,
+a teacher's red pen (朱) for marks and errors, and a yellow highlighter for
+"you are here" states. Kanji are set in **Klee One**, a textbook-style face
+that shows correct handwritten forms; everything else uses **M PLUS 2**.
 
-Colours come from CSS variables defined for both themes; use `var(--jade)`
-etc. rather than hard-coded values so light mode keeps working.
+- `PaperBackground` draws the whole site onto 田字格 practice paper (two fixed
+  canvases). A few squares hold faint pencil kanji, some with a faded red
+  hanamaru. Moving the pointer writes kanji into nearby squares, which fade
+  like erased pencil. It only animates while something is fading, and
+  reduced-motion settings turn the writing off. Strengths are set per theme
+  with `--ghost-alpha`, `--trace-alpha` and `--mark-alpha`.
+- `KanjiBox` writes text into genkouyoushi practice squares, one per character.
+- `Hanamaru` is the red spiral-flower mark teachers draw on good work. It's
+  drawn when you grade a demo card "Good" and when a deck is ready. Keep it
+  for those moments.
+- Colours are CSS variables in `src/index.css`, defined for both themes.
+  Use `var(--ink)`, `var(--shu)` and so on rather than hard-coded values.
+- Components style themselves with the shared classes in `index.css` (`.btn`,
+  `.btn-ink`, `.sheet`, `.input`, …). Keep properties a `:hover` rule changes
+  out of inline styles, because inline styles win on specificity.
 
 Because this is a single-page app, the static host must rewrite unknown paths
 to `index.html` so that refreshing on `/app` or `/dashboard` works.
